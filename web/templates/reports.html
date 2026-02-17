@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Reports — Crypto Pattern System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Label Performance Reports</h1>
+</div>
+
+{% if not has_training_data and not labels %}
+<div class="empty-state">
+    <h2>No data available</h2>
+    <p>Run <code>/retrain</code> via Telegram or add references and run scans to generate report data.</p>
+</div>
+{% else %}
+
+<div id="reports-loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Computing metrics...</p>
+</div>
+
+<div id="reports-content" style="display:none;">
+    <div id="reports-error" class="empty-state" style="display:none;">
+        <h2>Failed to load metrics</h2>
+        <p id="reports-error-msg"></p>
+    </div>
+
+    <div id="reports-grid" class="reports-grid"></div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loading = document.getElementById('reports-loading');
+    const content = document.getElementById('reports-content');
+    const grid = document.getElementById('reports-grid');
+    const errorDiv = document.getElementById('reports-error');
+    const errorMsg = document.getElementById('reports-error-msg');
+
+    if (!loading) return;
+
+    fetch('/api/reports/label-metrics')
+        .then(r => r.json())
+        .then(data => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+
+            if (data.error && !data.labels) {
+                errorDiv.style.display = 'block';
+                errorMsg.textContent = data.error;
+                return;
+            }
+
+            const labels = data.labels || {};
+            if (Object.keys(labels).length === 0) {
+                errorDiv.style.display = 'block';
+                errorMsg.textContent = 'No label data found. Run scans or retrain models first.';
+                return;
+            }
+
+            // Source badge
+            const sourceHtml = `<div class="report-source">
+                Data source: <span class="badge badge-info">${data.source || 'unknown'}</span>
+            </div>`;
+            grid.innerHTML = sourceHtml;
+
+            // Render a card for each label
+            for (const [label, metrics] of Object.entries(labels)) {
+                grid.innerHTML += renderLabelCard(label, metrics);
+            }
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            errorDiv.style.display = 'block';
+            errorMsg.textContent = err.message;
+        });
+});
+
+function renderLabelCard(label, m) {
+    let html = `<div class="report-card">
+        <div class="report-card-header">
+            <h2>${label}</h2>
+            <span class="badge badge-info">${m.sample_count} samples</span>
+        </div>
+
+        <div class="report-section">
+            <h3>Overview</h3>
+            <div class="report-metrics-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Symbols</div>
+                    <div class="metric-value">${m.symbols_count || 0}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Timeframes</div>
+                    <div class="metric-value">${(m.timeframes || []).join(', ')}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Avg DTW Score</div>
+                    <div class="metric-value">${m.avg_dtw_score || 0}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Score Range</div>
+                    <div class="metric-value">${m.min_dtw_score || 0} — ${m.max_dtw_score || 0}</div>
+                </div>
+            </div>
+        </div>`;
+
+    // Pattern P/L metrics
+    if (m.avg_pattern_return !== undefined || m.max_pattern_gain !== undefined) {
+        html += `<div class="report-section">
+            <h3>Pattern P/L</h3>
+            <div class="report-metrics-grid">`;
+
+        if (m.avg_pattern_return !== undefined) {
+            const retClass = m.avg_pattern_return >= 0 ? 'metric-positive' : 'metric-negative';
+            html += `<div class="metric-box">
+                <div class="metric-label">Avg Return</div>
+                <div class="metric-value ${retClass}">${(m.avg_pattern_return * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.max_pattern_gain !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Max Gain</div>
+                <div class="metric-value metric-positive">${(m.max_pattern_gain * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.max_pattern_loss !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Max Loss</div>
+                <div class="metric-value metric-negative">${(m.max_pattern_loss * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.avg_max_drawdown !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Avg Max DD</div>
+                <div class="metric-value metric-negative">${(m.avg_max_drawdown * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.worst_drawdown !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Worst DD</div>
+                <div class="metric-value metric-negative">${(m.worst_drawdown * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.avg_max_gain !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Avg Max Gain</div>
+                <div class="metric-value metric-positive">${(m.avg_max_gain * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.best_max_gain !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Best Max Gain</div>
+                <div class="metric-value metric-positive">${(m.best_max_gain * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.avg_max_loss !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Avg Max Loss</div>
+                <div class="metric-value metric-negative">${(m.avg_max_loss * 100).toFixed(2)}%</div>
+            </div>`;
+        }
+        if (m.avg_pattern_volatility !== undefined) {
+            html += `<div class="metric-box">
+                <div class="metric-label">Avg Volatility</div>
+                <div class="metric-value">${m.avg_pattern_volatility.toFixed(4)}</div>
+            </div>`;
+        }
+
+        html += `</div></div>`;
+    }
+
+    // Threshold probability metrics
+    if (m.thresholds && Object.keys(m.thresholds).length > 0) {
+        html += `<div class="report-section">
+            <h3>Gain Probability Distribution</h3>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Threshold</th>
+                        <th>Avg Prob</th>
+                        <th>Median</th>
+                        <th>&gt;50%</th>
+                        <th>&gt;75%</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        for (const [thresh, t] of Object.entries(m.thresholds)) {
+            const avgClass = t.avg_probability >= 0.5 ? 'metric-positive' : t.avg_probability >= 0.3 ? '' : 'metric-negative';
+            html += `<tr>
+                <td><strong>${thresh} Gain</strong></td>
+                <td class="${avgClass}">${(t.avg_probability * 100).toFixed(1)}%</td>
+                <td>${(t.median_probability * 100).toFixed(1)}%</td>
+                <td>${t.pct_above_50 !== undefined ? t.pct_above_50.toFixed(1) + '%' : '-'}</td>
+                <td>${t.pct_above_75 !== undefined ? t.pct_above_75.toFixed(1) + '%' : '-'}</td>
+            </tr>`;
+        }
+
+        html += `</tbody></table></div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+</script>
+{% endblock %}

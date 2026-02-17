@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result.symbol }} — Crypto Pattern System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="/" class="back-link">&laquo; Back to Dashboard</a>
+    <h1>{{ result.symbol }} <span class="badge badge-info">{{ result.timeframe }}</span></h1>
+</div>
+
+<div class="detail-layout">
+    <div class="chart-container">
+        <div id="price-chart" class="chart-box"></div>
+        <div id="volume-chart" class="chart-box chart-volume"></div>
+    </div>
+
+    <div class="sidebar">
+        <div class="info-card">
+            <h3>Match Info</h3>
+            <div class="info-row">
+                <span class="info-label">Reference</span>
+                <span class="info-value">{{ result.ref_label or result.ref_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">DTW Score</span>
+                <span class="info-value score {% if result.dtw_score >= 0.7 %}score-high{% elif result.dtw_score >= 0.5 %}score-mid{% else %}score-low{% endif %}">
+                    {{ "%.4f"|format(result.dtw_score) }}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Price Distance</span>
+                <span class="info-value">{{ "%.4f"|format(result.price_distance or 0) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Diff Distance</span>
+                <span class="info-value">{{ "%.4f"|format(result.diff_distance or 0) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Scale Factor</span>
+                <span class="info-value">{{ "%.2f"|format(result.best_scale_factor or 1.0) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Scanned</span>
+                <span class="info-value">{{ result.created_at[:16] }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>ML Probabilities</h3>
+            {% for thresh_key, label in [('0.05', '5%'), ('0.1', '10%'), ('0.15', '15%'), ('0.2', '20%')] %}
+            {% set p = result.ml_probs.get(thresh_key, 0) %}
+            <div class="prob-row">
+                <span class="prob-label">{{ label }} Gain</span>
+                <div class="prob-bar-container">
+                    <div class="prob-bar {% if p >= 0.7 %}prob-bar-high{% elif p >= 0.4 %}prob-bar-mid{% else %}prob-bar-low{% endif %}"
+                         style="width: {{ (p * 100)|int }}%">
+                    </div>
+                </div>
+                <span class="prob-value">{{ "%.0f"|format(p * 100) }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='chart.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadChart({{ result.id }});
+    });
+</script>
+{% endblock %}

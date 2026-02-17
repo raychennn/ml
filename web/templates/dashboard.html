@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Crypto Pattern System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Scan Results</h1>
+    <span class="badge badge-info">{{ total }} total</span>
+</div>
+
+<div class="filters">
+    <form method="GET" action="/">
+        <label>Timeframe:</label>
+        <select name="timeframe" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for tf in timeframes %}
+            <option value="{{ tf }}" {% if timeframe == tf %}selected{% endif %}>{{ tf }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Sort by:</label>
+        <select name="sort_by" onchange="this.form.submit()">
+            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Time</option>
+            <option value="dtw_score" {% if sort_by == 'dtw_score' %}selected{% endif %}>Score</option>
+            <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol</option>
+        </select>
+
+        <select name="sort_dir" onchange="this.form.submit()">
+            <option value="DESC" {% if sort_dir == 'DESC' %}selected{% endif %}>Desc</option>
+            <option value="ASC" {% if sort_dir == 'ASC' %}selected{% endif %}>Asc</option>
+        </select>
+    </form>
+</div>
+
+{% if results %}
+<div class="results-table-wrap">
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>TF</th>
+                <th>Reference</th>
+                <th>DTW Score</th>
+                <th>5%↑</th>
+                <th>10%↑</th>
+                <th>15%↑</th>
+                <th>20%↑</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr class="clickable-row" onclick="window.location='/result/{{ r.id }}'">
+                <td class="symbol">{{ r.symbol }}</td>
+                <td>{{ r.timeframe }}</td>
+                <td>{{ r.ref_label or r.ref_id }}</td>
+                <td>
+                    <span class="score {% if r.dtw_score >= 0.7 %}score-high{% elif r.dtw_score >= 0.5 %}score-mid{% else %}score-low{% endif %}">
+                        {{ "%.3f"|format(r.dtw_score) }}
+                    </span>
+                </td>
+                {% for thresh in ['0.05', '0.1', '0.15', '0.2'] %}
+                <td>
+                    {% set p = r.ml_probs.get(thresh, 0) %}
+                    <span class="prob-badge {% if p >= 0.7 %}prob-high{% elif p >= 0.4 %}prob-mid{% else %}prob-low{% endif %}">
+                        {{ "%.0f"|format(p * 100) }}%
+                    </span>
+                </td>
+                {% endfor %}
+                <td class="time-cell">{{ r.created_at[:16] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}&timeframe={{ timeframe or '' }}&sort_by={{ sort_by }}&sort_dir={{ sort_dir }}">&laquo; Prev</a>
+    {% endif %}
+
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}&timeframe={{ timeframe or '' }}&sort_by={{ sort_by }}&sort_dir={{ sort_dir }}">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <h2>No scan results yet</h2>
+    <p>Run a scan via Telegram <code>/scan</code> command to populate results.</p>
+</div>
+{% endif %}
+{% endblock %}

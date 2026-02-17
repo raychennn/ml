@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Status — Crypto Pattern System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>System Status</h1>
+</div>
+
+<div class="status-grid">
+    <div class="status-card">
+        <h3>ML Models</h3>
+        <div class="status-value {% if info.ml_loaded %}status-ok{% else %}status-warn{% endif %}">
+            {{ 'Loaded' if info.ml_loaded else 'Fallback Mode' }}
+        </div>
+        <div class="status-detail">{{ info.model_count }} models</div>
+    </div>
+
+    <div class="status-card">
+        <h3>References</h3>
+        <div class="status-value">{{ info.ref_count }}</div>
+        <div class="status-detail">active patterns</div>
+    </div>
+
+    <div class="status-card">
+        <h3>Scan Results</h3>
+        <div class="status-value">{{ info.total_results }}</div>
+        <div class="status-detail">total stored</div>
+    </div>
+
+    <div class="status-card">
+        <h3>Last Scan</h3>
+        <div class="status-value status-time">{{ info.last_scan[:16] if info.last_scan != 'Never' else 'Never' }}</div>
+    </div>
+
+    <div class="status-card">
+        <h3>Timeframes</h3>
+        <div class="status-value">
+            {% for tf in info.timeframes %}
+            <span class="badge badge-info">{{ tf }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="status-card">
+        <h3>Data Root</h3>
+        <div class="status-detail">{{ info.data_root }}</div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}References — Crypto Pattern System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Reference Patterns</h1>
+    <span class="badge badge-info">{{ references|length }} patterns</span>
+</div>
+
+<div class="filters">
+    <form method="GET" action="/references">
+        <label>
+            <input type="checkbox" name="show_inactive" value="1"
+                   {% if show_inactive %}checked{% endif %}
+                   onchange="this.form.submit()">
+            Show inactive
+        </label>
+    </form>
+</div>
+
+{% if references %}
+<div class="ref-grid">
+    {% for item in references %}
+    {% set ref = item.ref %}
+    <div class="ref-card {% if not ref.active %}ref-inactive{% endif %}"
+         onclick="window.location='/reference/{{ ref.id }}'">
+        <div class="ref-card-header">
+            <span class="symbol">{{ ref.symbol }}</span>
+            <span class="badge badge-info">{{ ref.timeframe }}</span>
+            {% if not ref.active %}
+            <span class="badge badge-warn">Inactive</span>
+            {% endif %}
+        </div>
+        <div class="ref-card-label">{{ ref.label }}</div>
+        {% if ref.description %}
+        <div class="ref-card-desc">{{ ref.description }}</div>
+        {% endif %}
+        <div class="ref-card-meta">
+            <span class="ref-id">{{ ref.id }}</span>
+        </div>
+        <div class="ref-card-charts">
+            {% if item.has_sma_chart %}
+            <span class="badge badge-ok">SMA Chart</span>
+            {% endif %}
+            {% if item.has_full_chart %}
+            <span class="badge badge-ok">Full Chart</span>
+            {% endif %}
+            {% if not item.has_sma_chart and not item.has_full_chart %}
+            <span class="badge badge-warn">No Charts</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>No reference patterns</h2>
+    <p>Add references via Telegram <code>/add_ref</code> command.</p>
+</div>
+{% endif %}
+{% endblock %}

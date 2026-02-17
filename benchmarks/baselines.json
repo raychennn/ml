@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "description": "Expected performance baselines. WARN if >1.5x, FAIL if >3x.",
+  "baselines": {
+    "dtw_single_pair": {
+      "description": "DTW distance on two 120-point z-normalized series",
+      "metric": "seconds",
+      "expected": 0.01,
+      "warn_multiplier": 1.5,
+      "fail_multiplier": 3.0
+    },
+    "dtw_batch_10": {
+      "description": "DTW batch of 10 pairs (sequential)",
+      "metric": "seconds",
+      "expected": 0.1,
+      "warn_multiplier": 1.5,
+      "fail_multiplier": 3.0
+    },
+    "dtw_numpy_fallback": {
+      "description": "Pure numpy DTW on two 120-point series",
+      "metric": "seconds",
+      "expected": 0.05,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "prescreening_100_symbols": {
+      "description": "Stage 1 prescreening throughput for 100 symbols",
+      "metric": "seconds",
+      "expected": 0.5,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "prescreening_symbols_per_sec": {
+      "description": "Symbols processed per second in prescreening",
+      "metric": "symbols/sec",
+      "expected": 200,
+      "warn_multiplier": 0.5,
+      "fail_multiplier": 0.2,
+      "higher_is_better": true
+    },
+    "parquet_write_single": {
+      "description": "Write a single 5000-row Parquet file",
+      "metric": "seconds",
+      "expected": 0.05,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "parquet_read_single": {
+      "description": "Read a single 5000-row Parquet file",
+      "metric": "seconds",
+      "expected": 0.03,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "parquet_bulk_read_50": {
+      "description": "Bulk read 50 Parquet files (5000 rows each)",
+      "metric": "seconds",
+      "expected": 1.0,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "ml_inference_single": {
+      "description": "Single ML prediction (feature extraction + model predict)",
+      "metric": "seconds",
+      "expected": 0.02,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "ml_inference_batch_10": {
+      "description": "Batch of 10 ML predictions",
+      "metric": "seconds",
+      "expected": 0.15,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "scan_cycle_20_symbols": {
+      "description": "Full scan cycle with 20 synthetic symbols, 1 reference",
+      "metric": "seconds",
+      "expected": 5.0,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    },
+    "prepare_for_dtw": {
+      "description": "DataNormalizer.prepare_for_dtw on 500-row DataFrame",
+      "metric": "seconds",
+      "expected": 0.005,
+      "warn_multiplier": 2.0,
+      "fail_multiplier": 5.0
+    }
+  }
+}

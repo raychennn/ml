@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ref.symbol }} {{ ref.label }} — References{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="/references" class="back-link">&laquo; Back to References</a>
+    <h1>{{ ref.symbol }} <span class="badge badge-info">{{ ref.timeframe }}</span></h1>
+</div>
+
+<div class="ref-detail-info">
+    <div class="info-card">
+        <h3>Reference Info</h3>
+        <div class="info-row">
+            <span class="info-label">ID</span>
+            <span class="info-value"><code>{{ ref.id }}</code></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Label</span>
+            <span class="info-value">{{ ref.label }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Period</span>
+            <span class="info-value">{{ dt_start }} → {{ dt_end }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Status</span>
+            <span class="info-value">{{ 'Active' if ref.active else 'Inactive' }}</span>
+        </div>
+        {% if ref.description %}
+        <div class="info-row">
+            <span class="info-label">Description</span>
+            <span class="info-value">{{ ref.description }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="ref-charts-section">
+    <h2>Pure SMA Chart (SMA 30 / 45 / 60)</h2>
+    {% if has_sma_chart %}
+    <div class="ref-chart-container">
+        <img src="/reference/{{ ref.id }}/chart/sma"
+             alt="SMA Chart for {{ ref.symbol }}"
+             class="ref-chart-img" loading="lazy">
+    </div>
+    {% else %}
+    <div class="empty-state small">
+        <p>SMA chart not yet generated. Charts are generated when data is available.</p>
+    </div>
+    {% endif %}
+
+    <h2>Full Chart (OHLC + SMA + Volume + Spikes)</h2>
+    {% if has_full_chart %}
+    <div class="ref-chart-container">
+        <img src="/reference/{{ ref.id }}/chart/full"
+             alt="Full Chart for {{ ref.symbol }}"
+             class="ref-chart-img" loading="lazy">
+    </div>
+    {% else %}
+    <div class="empty-state small">
+        <p>Full chart not yet generated. Charts are generated when data is available.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
